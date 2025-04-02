@@ -25,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import FloatingChat from './FloatingChat';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -218,6 +219,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           SEMFAS Prefeitura Municipal de Aracaju - Rua da Solidariedade, 100 - Contato: (11) 5555-1234 - suporte@semfas.com
         </footer>
       </div>
+      
+      {/* Floating Chat Button */}
+      <FloatingChat />
     </div>
   );
 };
