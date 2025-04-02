@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,20 +11,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Search, 
-  Plus, 
-  HelpCircle, 
-  Filter, 
-  Download, 
-  FileText, 
-  Pencil, 
+import {
+  Search,
+  Plus,
+  HelpCircle,
+  Filter,
+  Download,
+  FileText,
+  Pencil,
   Calendar,
   CheckCircle2,
   Clock,
   Users,
   AlertTriangle,
-  BarChart
+  BarChart,
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  UserCheck,
+  Info,
+  ArrowLeft
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
@@ -41,6 +47,17 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface Attendance {
   id: string;
@@ -52,12 +69,33 @@ interface Attendance {
   status: 'Aberto' | 'Em andamento' | 'Concluído';
 }
 
+interface Citizen {
+  id: string;
+  name: string;
+  cpf: string;
+  birthDate: string;
+  address: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  phone: string;
+  email: string;
+  socioeconomicStatus: string;
+  specificNeeds: string;
+  registerDate: string;
+}
+
 const Attendances = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
+  const [citizenHistoryStartDate, setCitizenHistoryStartDate] = useState('');
+  const [citizenHistoryEndDate, setCitizenHistoryEndDate] = useState('');
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [formData, setFormData] = useState({
     citizenId: '',
     date: '',
@@ -66,7 +104,6 @@ const Attendances = () => {
     status: 'Aberto',
   });
   
-  // Mock data
   const attendances: Attendance[] = [
     {
       id: '1',
@@ -114,17 +151,90 @@ const Attendances = () => {
       status: 'Concluído',
     },
   ];
-  
-  // Mock data for citizens
-  const citizens = [
-    { id: '1', name: 'João Silva Pereira' },
-    { id: '2', name: 'Maria Oliveira Santos' },
-    { id: '3', name: 'Ana Beatriz Costa' },
-    { id: '4', name: 'Carlos Eduardo Lima' },
-    { id: '5', name: 'Luciana Ferreira Dias' },
+
+  const citizens: Citizen[] = [
+    {
+      id: '1',
+      name: 'João Silva Pereira',
+      cpf: '123.456.789-00',
+      birthDate: '1985-03-15',
+      address: 'Rua das Flores, 123',
+      neighborhood: 'Centro',
+      city: 'Nova Esperança',
+      state: 'SP',
+      zipCode: '12345-678',
+      phone: '(11) 98765-4321',
+      email: 'joao.silva@email.com',
+      socioeconomicStatus: 'Baixa renda',
+      specificNeeds: 'Apoio alimentar e psicológico',
+      registerDate: '2022-01-15',
+    },
+    {
+      id: '2',
+      name: 'Maria Oliveira Santos',
+      cpf: '987.654.321-00',
+      birthDate: '1990-07-22',
+      address: 'Avenida Brasil, 456',
+      neighborhood: 'Jardim Primavera',
+      city: 'Nova Esperança',
+      state: 'SP',
+      zipCode: '12345-789',
+      phone: '(11) 91234-5678',
+      email: 'maria.santos@email.com',
+      socioeconomicStatus: 'Média renda',
+      specificNeeds: 'Apoio para qualificação profissional',
+      registerDate: '2022-03-10',
+    },
+    {
+      id: '3',
+      name: 'Ana Beatriz Costa',
+      cpf: '456.789.123-00',
+      birthDate: '1978-11-30',
+      address: 'Rua dos Lírios, 789',
+      neighborhood: 'Jardim das Flores',
+      city: 'Nova Esperança',
+      state: 'SP',
+      zipCode: '12345-456',
+      phone: '(11) 99876-5432',
+      email: 'ana.costa@email.com',
+      socioeconomicStatus: 'Baixa renda',
+      specificNeeds: 'Acesso à moradia, acompanhamento familiar',
+      registerDate: '2022-05-20',
+    },
+    {
+      id: '4',
+      name: 'Carlos Eduardo Lima',
+      cpf: '321.654.987-00',
+      birthDate: '1995-04-18',
+      address: 'Rua das Palmeiras, 321',
+      neighborhood: 'Centro',
+      city: 'Nova Esperança',
+      state: 'SP',
+      zipCode: '12345-123',
+      phone: '(11) 95678-1234',
+      email: 'carlos.lima@email.com',
+      socioeconomicStatus: 'Média renda',
+      specificNeeds: 'Apoio psicológico',
+      registerDate: '2022-07-05',
+    },
+    {
+      id: '5',
+      name: 'Luciana Ferreira Dias',
+      cpf: '654.321.987-00',
+      birthDate: '1982-09-10',
+      address: 'Avenida das Árvores, 654',
+      neighborhood: 'Jardim Europa',
+      city: 'Nova Esperança',
+      state: 'SP',
+      zipCode: '12345-654',
+      phone: '(11) 94321-8765',
+      email: 'luciana.dias@email.com',
+      socioeconomicStatus: 'Alta renda',
+      specificNeeds: 'Orientação para acesso a serviços públicos',
+      registerDate: '2022-09-15',
+    },
   ];
-  
-  // Mock data for attendance types
+
   const attendanceTypes = [
     'Visita domiciliar',
     'Encaminhamento médico',
@@ -134,7 +244,26 @@ const Attendances = () => {
     'Orientação jurídica',
     'Outro',
   ];
-  
+
+  const getCitizenHistory = (citizenId: string, startDate?: string, endDate?: string) => {
+    let history = attendances.filter(a => a.citizenId === citizenId);
+    
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59);
+      
+      history = history.filter(a => {
+        const attendanceDate = new Date(a.date);
+        return attendanceDate >= start && attendanceDate <= end;
+      });
+    }
+    
+    return history.sort((a, b) => {
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR', {
@@ -143,7 +272,7 @@ const Attendances = () => {
       year: 'numeric',
     });
   };
-  
+
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('pt-BR', {
@@ -151,7 +280,7 @@ const Attendances = () => {
       minute: '2-digit',
     });
   };
-  
+
   const filteredAttendances = attendances.filter(attendance => {
     const matchesSearch = attendance.citizenName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           attendance.type.toLowerCase().includes(searchTerm.toLowerCase());
@@ -170,9 +299,8 @@ const Attendances = () => {
     
     return matchesSearch && matchesStatus && matchesDate;
   });
-  
+
   const handleAddAttendance = () => {
-    // Validate form
     if (!formData.citizenId || !formData.date || !formData.type) {
       toast({
         title: "Campos obrigatórios",
@@ -182,7 +310,6 @@ const Attendances = () => {
       return;
     }
     
-    // Add attendance logic would go here in a real application
     const citizenName = citizens.find(c => c.id === formData.citizenId)?.name || '';
     
     toast({
@@ -190,7 +317,6 @@ const Attendances = () => {
       description: `Atendimento para ${citizenName} foi registrado com sucesso!`,
     });
     
-    // Reset form and close dialog
     setFormData({
       citizenId: '',
       date: '',
@@ -200,28 +326,61 @@ const Attendances = () => {
     });
     setIsAddDialogOpen(false);
   };
-  
+
   const handleStatusChange = (id: string, newStatus: 'Aberto' | 'Em andamento' | 'Concluído') => {
-    // In a real application, this would update the status in the database
     toast({
       title: "Status atualizado",
       description: `Status do atendimento alterado para ${newStatus}`,
     });
   };
-  
+
   const handleHelpClick = () => {
     toast({
       title: "Ajuda - Módulo de Atendimentos",
       description: "Utilize este módulo para registrar e gerenciar os atendimentos realizados aos cidadãos.",
     });
   };
-  
+
+  const handleViewCitizenDetails = (citizenId: string) => {
+    const citizen = citizens.find(c => c.id === citizenId);
+    if (citizen) {
+      setSelectedCitizen(citizen);
+      setCitizenHistoryStartDate('');
+      setCitizenHistoryEndDate('');
+      setIsDetailsOpen(true);
+    } else {
+      toast({
+        title: "Cidadão não encontrado",
+        description: "Não foi possível encontrar os detalhes deste cidadão.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedCitizen(null);
+    setIsDetailsOpen(false);
+  };
+
+  const calculateAge = (birthDate: string) => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
   const statusColors = {
     'Aberto': 'bg-blue-100 text-blue-800',
     'Em andamento': 'bg-yellow-100 text-yellow-800',
     'Concluído': 'bg-green-100 text-green-800',
   };
-  
+
   const statusIcons = {
     'Aberto': <Clock className="h-4 w-4 mr-1" />,
     'Em andamento': <AlertTriangle className="h-4 w-4 mr-1" />,
@@ -246,7 +405,6 @@ const Attendances = () => {
         </TooltipProvider>
       </div>
       
-      {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -311,7 +469,6 @@ const Attendances = () => {
         </Card>
       </div>
       
-      {/* Action bar */}
       <div className="flex flex-col md:flex-row gap-4 md:items-end md:justify-between bg-white p-4 rounded-lg shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full md:w-auto">
           <div className="relative">
@@ -502,7 +659,6 @@ const Attendances = () => {
         </div>
       </div>
       
-      {/* Tabs */}
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="grid w-full md:w-[560px] grid-cols-3">
           <TabsTrigger value="all" className="data-[state=active]:bg-semfas-primary data-[state=active]:text-white">
@@ -574,12 +730,30 @@ const Attendances = () => {
                                       variant="ghost" 
                                       size="sm" 
                                       className="text-semfas-primary"
+                                      onClick={() => handleViewCitizenDetails(attendance.citizenId)}
+                                    >
+                                      <User className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Ver detalhes do cidadão</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="text-semfas-primary"
                                     >
                                       <FileText className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Ver detalhes</p>
+                                    <p>Ver detalhes do atendimento</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -658,6 +832,199 @@ const Attendances = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Drawer open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DrawerContent className="max-h-[90vh]">
+          <DrawerHeader className="text-left">
+            <DrawerTitle className="text-semfas-primary text-xl flex items-center">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mr-2 p-0 h-8 w-8" 
+                onClick={handleCloseDetails}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              Detalhes do Cidadão
+            </DrawerTitle>
+            <DrawerDescription>
+              Informações completas e histórico de atendimentos
+            </DrawerDescription>
+          </DrawerHeader>
+          <ScrollArea className="px-4 pb-4 max-h-[calc(90vh-120px)]">
+            {selectedCitizen && (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center">
+                      <User className="mr-2 h-5 w-5 text-semfas-primary" />
+                      Informações Pessoais
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center mb-4">
+                      <div className="w-16 h-16 bg-semfas-primary rounded-full flex items-center justify-center mr-4">
+                        <span className="text-white font-bold text-2xl">
+                          {selectedCitizen.name.substring(0, 1)}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold">{selectedCitizen.name}</h3>
+                        <p className="text-gray-500">{selectedCitizen.cpf}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-500">Data de Nascimento</p>
+                        <p className="font-medium flex items-center">
+                          <Calendar className="h-4 w-4 mr-2 text-semfas-primary/70" />
+                          {new Date(selectedCitizen.birthDate).toLocaleDateString('pt-BR')} 
+                          <span className="ml-2 text-sm text-gray-500">
+                            ({calculateAge(selectedCitizen.birthDate)} anos)
+                          </span>
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-500">Status Socioeconômico</p>
+                        <p className="font-medium flex items-center">
+                          <Info className="h-4 w-4 mr-2 text-semfas-primary/70" />
+                          {selectedCitizen.socioeconomicStatus}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-500">Telefone</p>
+                        <p className="font-medium flex items-center">
+                          <Phone className="h-4 w-4 mr-2 text-semfas-primary/70" />
+                          {selectedCitizen.phone}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-500">E-mail</p>
+                        <p className="font-medium flex items-center">
+                          <Mail className="h-4 w-4 mr-2 text-semfas-primary/70" />
+                          {selectedCitizen.email}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center">
+                      <MapPin className="mr-2 h-5 w-5 text-semfas-primary" />
+                      Endereço
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="font-medium">{selectedCitizen.address}</p>
+                      <p className="text-gray-600">
+                        {selectedCitizen.neighborhood}, {selectedCitizen.city} - {selectedCitizen.state}
+                      </p>
+                      <p className="text-gray-600">CEP: {selectedCitizen.zipCode}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center">
+                      <UserCheck className="mr-2 h-5 w-5 text-semfas-primary" />
+                      Necessidades Específicas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>{selectedCitizen.specificNeeds}</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center">
+                      <FileText className="mr-2 h-5 w-5 text-semfas-primary" />
+                      Histórico de Atendimentos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 bg-gray-50 p-3 rounded-md">
+                        <div>
+                          <Label htmlFor="history-start-date" className="text-sm">Data inicial</Label>
+                          <Input
+                            id="history-start-date"
+                            type="date"
+                            className="border-semfas-primary/20"
+                            value={citizenHistoryStartDate}
+                            onChange={(e) => setCitizenHistoryStartDate(e.target.value)}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="history-end-date" className="text-sm">Data final</Label>
+                          <Input
+                            id="history-end-date"
+                            type="date"
+                            className="border-semfas-primary/20"
+                            value={citizenHistoryEndDate}
+                            onChange={(e) => setCitizenHistoryEndDate(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[150px]">Data</TableHead>
+                            <TableHead>Tipo</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {getCitizenHistory(selectedCitizen.id, citizenHistoryStartDate, citizenHistoryEndDate).map((attendance) => (
+                            <TableRow key={attendance.id}>
+                              <TableCell>
+                                <div className="flex flex-col">
+                                  <span>{formatDate(attendance.date)}</span>
+                                  <span className="text-xs text-gray-500">{formatTime(attendance.date)}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>{attendance.type}</TableCell>
+                              <TableCell>
+                                <Badge 
+                                  className={`${statusColors[attendance.status]} border-none flex items-center`}
+                                  variant="outline"
+                                >
+                                  {statusIcons[attendance.status]}
+                                  {attendance.status}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {getCitizenHistory(selectedCitizen.id, citizenHistoryStartDate, citizenHistoryEndDate).length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center py-4 text-gray-500">
+                                Nenhum atendimento encontrado no período selecionado.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </ScrollArea>
+          <DrawerFooter>
+            <Button variant="outline" onClick={handleCloseDetails}>Fechar</Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
