@@ -1,10 +1,10 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { MessageCircle, X, Send } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const FloatingChat = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,15 +12,19 @@ const FloatingChat = () => {
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [response, setResponse] = useState<string | null>(null);
+  const [chatHistory, setChatHistory] = useState<Array<{type: 'user' | 'response', content: string}>>([]);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
-    if (!isOpen) {
-      setResponse(null);
-    }
   };
+
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatHistory]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +39,8 @@ const FloatingChat = () => {
     }
 
     setIsSending(true);
+    
+    setChatHistory(prev => [...prev, { type: 'user', content: message }]);
     
     try {
       const response = await fetch('https://n8n.jetsalesbrasil.com/webhook/b5959344-ebfb-4810-b749-b15da3e12b7a', {
@@ -52,11 +58,16 @@ const FloatingChat = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setResponse(JSON.stringify(data, null, 2));
+        
+        const responseMessage = data.message || JSON.stringify(data);
+        setChatHistory(prev => [...prev, { type: 'response', content: responseMessage }]);
+        
         toast({
           title: "Mensagem enviada",
           description: "Sua mensagem foi enviada com sucesso.",
         });
+        
+        setMessage('');
       } else {
         throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
@@ -67,6 +78,11 @@ const FloatingChat = () => {
         description: error instanceof Error ? error.message : "Não foi possível enviar sua mensagem. Tente novamente mais tarde.",
         variant: "destructive",
       });
+      
+      setChatHistory(prev => [...prev, { 
+        type: 'response', 
+        content: error instanceof Error ? `Erro: ${error.message}` : "Erro ao enviar mensagem" 
+      }]);
     } finally {
       setIsSending(false);
     }
@@ -83,28 +99,9 @@ const FloatingChat = () => {
             </Button>
           </div>
           
-          <div className="p-4">
-            {response ? (
-              <div className="space-y-4">
-                <h4 className="font-medium text-sm">Resposta recebida:</h4>
-                <pre className="bg-gray-50 p-2 rounded text-xs overflow-auto max-h-40">
-                  {response}
-                </pre>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => {
-                    setResponse(null);
-                    setName('');
-                    setPhone('');
-                    setMessage('');
-                  }}
-                >
-                  Nova mensagem
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="p-4 flex flex-col h-[400px]">
+            {chatHistory.length === 0 ? (
+              <div className="space-y-4 flex-1">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome</Label>
                   <Input 
@@ -124,37 +121,55 @@ const FloatingChat = () => {
                     placeholder="(00) 00000-0000"
                   />
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="message">Mensagem</Label>
-                  <textarea 
-                    id="message"
-                    className="w-full min-h-[100px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-semfas-primary text-sm"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Digite sua mensagem..."
-                  />
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full bg-semfas-primary"
-                  disabled={isSending}
-                >
-                  {isSending ? (
-                    <span className="flex items-center gap-2">
-                      <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                      Enviando...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <Send size={16} />
-                      Enviar mensagem
-                    </span>
-                  )}
-                </Button>
-              </form>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+                {chatHistory.map((item, index) => (
+                  <div 
+                    key={index} 
+                    className={`p-2 rounded-lg max-w-[90%] ${
+                      item.type === 'user' 
+                        ? 'bg-semfas-primary text-white ml-auto' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {item.content}
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
             )}
+            
+            <form onSubmit={handleSubmit} className="mt-auto">
+              <div className="space-y-2">
+                <Label htmlFor="message">Mensagem</Label>
+                <Textarea 
+                  id="message"
+                  className="w-full min-h-[80px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-semfas-primary text-sm"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Digite sua mensagem..."
+                />
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full bg-semfas-primary mt-2"
+                disabled={isSending}
+              >
+                {isSending ? (
+                  <span className="flex items-center gap-2">
+                    <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    Enviando...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Send size={16} />
+                    Enviar mensagem
+                  </span>
+                )}
+              </Button>
+            </form>
           </div>
         </div>
       ) : (
