@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       toast({
         title: "Login bem-sucedido",
-        description: `Bem-vindo(a), ${mockUser.name}, ao Prontuário Social do Cidadão - SEMFAS Nova Esperança`,
+        description: `Bem-vindo(a), ${mockUser.name}, ao Prontuário Social do Cidadão - SEMFAS Prefeitura Municipal de Aracaju`,
       });
       
       return true;

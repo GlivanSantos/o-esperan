@@ -215,7 +215,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
         {/* Footer */}
         <footer className="bg-white p-3 text-center border-t text-xs text-gray-500">
-          SEMFAS Nova Esperança - Rua da Solidariedade, 100 - Contato: (11) 5555-1234 - suporte@semfas.com
+          SEMFAS Prefeitura Municipal de Aracaju - Rua da Solidariedade, 100 - Contato: (11) 5555-1234 - suporte@semfas.com
         </footer>
       </div>
     </div>

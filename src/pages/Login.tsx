@@ -63,7 +63,7 @@ const Login = () => {
         </div>
         <div>
           <h1 className="text-semfas-primary font-bold text-xl">Prontuário Social do Cidadão</h1>
-          <p className="text-sm text-semfas-dark/70">SEMFAS Nova Esperança</p>
+          <p className="text-sm text-semfas-dark/70">SEMFAS Prefeitura Municipal de Aracaju</p>
         </div>
       </div>
       
@@ -148,7 +148,7 @@ const Login = () => {
       </Card>
       
       <footer className="absolute bottom-4 text-center text-xs text-semfas-dark/70 w-full px-4">
-        SEMFAS Nova Esperança - Rua da Solidariedade, 100 - Contato: (11) 5555-1234 - suporte@semfas.com
+        SEMFAS Prefeitura Municipal de Aracaju - Rua da Solidariedade, 100 - Contato: (11) 5555-1234 - suporte@semfas.com
       </footer>
     </div>
   );
